@@ -10,20 +10,9 @@ autocomplete_thunderdrive()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     #echo $prev
 
-    #case "${prev}" in
-    #    -t | --tmpdir | -a | --tarfile | -p | --passwdfile)
-    #        COMPREPLY=( $(compgen -f ${cur}) )
-    #        return 0
-    #        ;;
-    #    *)
-    #        ;;
-    #esac
-
-    opts="-h --help -s --search --useproxy --list --prompt --interactive --upload --uploadfile -u"
+    opts="-h --help --search --useproxy --list --prompt --interactive --uploadfile --uploadmode --downloadmode"
     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-    #wwcrypt --autocomplete
 }
 
-#complete -o filenames -o bashdefault -f -F wwcrypt_autocomplete wwcrypt
 complete -f -F autocomplete_thunderdrive thunderdrive.py
 

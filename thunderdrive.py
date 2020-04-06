@@ -39,7 +39,7 @@ class Tools(object):
 
 
 class ThunderDriveAPI(object):
-    """testas aprasymas"""
+    """thunderdrive.io api beta"""
     URL = "https://app.thunderdrive.io/secure/"
 
     errorStr = 'Whoops, looks like something went wrong.'
@@ -164,9 +164,9 @@ class ThunderDriveAPI(object):
         bar = fill * filledLength + '-' * (length - filledLength)
 
         print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = printEnd)
-        # Print New Line on Complete
-        if iteration == total: 
-            print()
+        # # Print New Line on Complete
+        # if iteration == total: 
+        #     print()
 
     __prevTime = None
     __prevChunk = None
@@ -205,9 +205,10 @@ class ThunderDriveAPI(object):
         self.logger.info("Directory '{}' not found in ThunderDrive.io".format(tdir))
         return "", ""
 
-    def uploadFileWithRetry(self, filePath, folderID = "", folderHash = ""):
-        retry_call(self.uploadFile, fargs=[filePath], fkwargs={"folderID": folderID, "folderHash": folderHash}
-                    , tries=3, delay=5, backoff=2, max_delay=30, logger=self.logger)
+    def uploadFileWithRetry(self, filePaths, folderID = "", folderHash = ""):
+        for filePath in filePaths:
+            retry_call(self.uploadFile, fargs=[filePath], fkwargs={"folderID": folderID, "folderHash": folderHash}
+                        , tries=3, delay=5, backoff=2, max_delay=30, logger=self.logger)
 
     __upload_step = 0
     def __upload_callback(self, encoder):
@@ -242,7 +243,8 @@ class ThunderDriveAPI(object):
             monitor = MultipartEncoderMonitor(form, callback=self.__upload_callback)
             headersupl["Content-Type"] = monitor.content_type
             
-            self.logger.info(filePath + ": uploading ....")
+            #self.logger.info(filePath + ": uploading ....")
+            self.logger.info("B: uploading file '{}' {}".format(filePath, datetime.datetime.now().strftime('%H:%M:%S')) )
 
             self._printProgressBar(0, 100, length = self.progressBarLen, prefix = 'P: ')
             self._getUpDownSpeed(init=True)
@@ -253,12 +255,13 @@ class ThunderDriveAPI(object):
                 , convertToJSON = False
                 )
             self._printProgressBar(100, 100, length = self.progressBarLen, prefix = 'P: ', suffix="        ")
+            print()
         
         #print()
         #self.logger.info(r)
         #r.raise_for_status()
-
-        self.logger.info("done")
+        self.logger.info("E: uploading done '{}' {}".format(filePath, datetime.datetime.now().strftime('%H:%M:%S')) )
+        #self.logger.info("done")
 
     def downloadFile(self, fileInfo):
 
@@ -287,6 +290,7 @@ class ThunderDriveAPI(object):
 
                 #time.sleep(0.1)
             self._printProgressBar(100, 100, length = self.progressBarLen, prefix = 'P: ', suffix="        ")
+            print()
 
         r.close()
         r.raise_for_status()
@@ -294,7 +298,7 @@ class ThunderDriveAPI(object):
         #pass
 
     def getSearchRez(self, query):
-        self.logger.info("searching.....")
+        self.logger.info("searching ({}) .....".format(query))
         params = [('orderBy','name'), ('orderDir',''), ('type',''), ('query', query)]
         #self.logger.info("pr")
         resp = self.get(self.URL + "drive/entries", params=params)
@@ -343,7 +347,7 @@ class InteractiveMode(object):
         #d = _data.json()
         d = _data
         currentItemList.clear()
-        viso = 0
+        total = 0
         for key in d["data"]:
             i += 1
             currentItemList[str(i)] = key
@@ -359,9 +363,9 @@ class InteractiveMode(object):
             print(i, key["name"], "(", key["type"], Tools.sizeof_fmt(key["file_size"]),")", user)
             #, key["id"], key["path"], key["type"], key["hash"]
             if type(key["file_size"]) == int:
-                viso += key["file_size"]
-        if viso > 0 : 
-            print ("Viso:", Tools.sizeof_fmt(viso))
+                total += key["file_size"]
+        if total > 0 : 
+            print ("Toltal:", Tools.sizeof_fmt(total))
 
     def printFileMenu(self, ):
         print("i - info")
@@ -455,33 +459,34 @@ class InteractiveMode(object):
 
 
 def paramModeHelp():
-    #print("helpas")
-    print("--disableproxy")
-    print("-s; --search=")
+    #print("help")
+    print("--search= - phrase to search")
     print("--list - list founded files")
-    print("--prompt - stop before download")
+    print("--prompt - stops before download")
     print("--uploadfile=failas.txt")
-    #print('test.py -i <inputfile> -o <outputfile>')
-    pass
+    print("--uploadmode - example: thunderdrive.py --uploadmode file1 file2 ...")
+    print("--downloadmode - example: thunderdrive.py --downloadmode file1 file2 ...")
 
 def paramMode(argv_full, logger):
     #print(argv_full)
     argv = argv_full[1:]
     #print(argv)
     
-    searchPhrase = ''
+    searchPhrases = []
     useproxy = False
     listfiles = False
     prompt = False
     upload = False
+    download = False
     interactive = False
-    filename = ""
+    #filename = ""
+    filenames = []
     tdirectory = None
 
     try:
         #opts, args = getopt.getopt \
-        opts, _ = getopt.getopt \
-            (argv, "hs:u:", ["search=", "useproxy", "list", "prompt", "upload", "help", "interactive", "uploadfile=", "tdir="])
+        opts, args = getopt.getopt \
+            (argv, "h", ["search=", "useproxy", "list", "prompt", "help", "interactive", "uploadmode", "downloadmode", "uploadfile=", "tdir="])
     except getopt.GetoptError  as err:
         print(err)
         sys.exit(2)
@@ -490,8 +495,13 @@ def paramMode(argv_full, logger):
         if opt in ("-h", "--help"):
             paramModeHelp()
             sys.exit(0)
-        elif opt in ("-s", "--search"):
-            searchPhrase = arg
+        elif opt == "--downloadmode":
+            download = True
+            searchPhrases = args
+            #TODO: pabaigti
+        elif opt == "--search":
+            download = True
+            searchPhrases.append(arg)
         # elif opt in ("--disableproxy"):
         #     disableproxy = True
         elif opt in ("--list"):
@@ -499,9 +509,12 @@ def paramMode(argv_full, logger):
         elif opt in ("--prompt"):
             prompt = True
             listfiles = True
-        elif opt in ("--upload", "--uploadfile", "-u"):
+        elif opt == "--uploadmode":
             upload = True
-            filename = arg
+            filenames = args
+        elif opt == "--uploadfile":
+            upload = True
+            filenames.append(arg)
         elif opt in ("--tdir"):
             tdirectory = arg
         elif opt in ("--interactive"):
@@ -525,17 +538,17 @@ def paramMode(argv_full, logger):
         folderID = folderHash = ""
         if tdirectory != None:
             folderID, folderHash = thunderClient.findFolderID(tdirectory)
-        thunderClient.uploadFileWithRetry(filename, folderID, folderHash)
+        thunderClient.uploadFileWithRetry(filenames, folderID, folderHash)
         sys.exit(0)
 
-    if searchPhrase != "":
-        thunderClient.getSearchRez(searchPhrase)
-        if listfiles:
-            InteractiveMode.printItems(_data = thunderClient.lastResp, userName=thunderClient.userName)
-        if prompt:
-            input("press any key to continue; ctrl+C - to stop")
-        thunderClient.downloadAllSearchresults(thunderClient.lastResp)
-        # print("All files downloaded")
+    if download:
+        for searchPhrase in searchPhrases:
+            thunderClient.getSearchRez(searchPhrase)
+            if listfiles:
+                InteractiveMode.printItems(_data = thunderClient.lastResp, userName=thunderClient.userName)
+            if prompt:
+                input("press any key to continue download; ctrl+C - to stop")
+            thunderClient.downloadAllSearchresults(thunderClient.lastResp)
         logger.info("All files downloaded")
         sys.exit(0)
 
@@ -579,7 +592,10 @@ def prepLogger():
 if __name__ == "__main__": 
     logger = prepLogger()
     try:
-        paramMode(sys.argv, logger)
+        if len(sys.argv) > 1:
+            paramMode(sys.argv, logger)
+        else:
+            paramModeHelp()
     except KeyboardInterrupt:
         print()
         sys.exit(0)
