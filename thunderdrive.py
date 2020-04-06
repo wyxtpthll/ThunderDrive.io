@@ -247,7 +247,8 @@ class ThunderDriveAPI(object):
             self._printProgressBar(0, 100, length = self.progressBarLen, prefix = 'P: ')
             self._getUpDownSpeed(init=True)
 
-            r = self.post(self.URL + "uploads", monitor, headers=headersupl
+            #r = 
+            self.post(self.URL + "uploads", monitor, headers=headersupl
                 #, auth=self.__rewrite_request
                 , convertToJSON = False
                 )
