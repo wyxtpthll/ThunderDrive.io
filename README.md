@@ -9,7 +9,7 @@ File locations:
 - ./config.txt (current dir)
 - ~/config.txt (home dir)
 
-
+Example: 
 [thunderdrive]
 
 username = xx@gmail.com
