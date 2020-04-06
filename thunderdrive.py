@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-#v0.20200405
+#v0.20200406
 import requests
 import sys, getopt
 import logging
