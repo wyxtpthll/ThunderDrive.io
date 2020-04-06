@@ -2,7 +2,7 @@
 #[[ -s "/pathtofile/thunderdrive.autocomplete.bash" ]] && source /pathtofile/thunderdrive.autocomplete.bash
 
 
-thunderdrive_autocomplete()
+autocomplete_thunderdrive()
 {
     local cur prev opts
     COMPREPLY=()
@@ -25,5 +25,5 @@ thunderdrive_autocomplete()
 }
 
 #complete -o filenames -o bashdefault -f -F wwcrypt_autocomplete wwcrypt
-complete -f -F thunderdrive_autocomplete thunderdrive
+complete -f -F autocomplete_thunderdrive thunderdrive.py
 
