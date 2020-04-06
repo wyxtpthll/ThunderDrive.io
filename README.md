@@ -4,9 +4,18 @@ Unofficial ThunderDrive.io python api
 # login
 
 Login data are stored in file config.txt.
+
 File locations:
 - ./config.txt (current dir)
 - ~/config.txt (home dir)
+
+
+[thunderdrive]
+
+username = xx@gmail.com
+
+password = password
+
 
 # Usage
 
