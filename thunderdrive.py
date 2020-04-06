@@ -466,6 +466,7 @@ def paramModeHelp():
     print("--uploadfile=failas.txt")
     print("--uploadmode - example: thunderdrive.py --uploadmode file1 file2 ...")
     print("--downloadmode - example: thunderdrive.py --downloadmode file1 file2 ...")
+    print("--tdir=THdir, --targetdir=THdir - target directory in thinderdrive.io for upload") 
 
 def paramMode(argv_full, logger):
     #print(argv_full)
@@ -486,7 +487,7 @@ def paramMode(argv_full, logger):
     try:
         #opts, args = getopt.getopt \
         opts, args = getopt.getopt \
-            (argv, "h", ["search=", "useproxy", "list", "prompt", "help", "interactive", "uploadmode", "downloadmode", "uploadfile=", "tdir="])
+            (argv, "h", ["search=", "useproxy", "list", "prompt", "help", "interactive", "uploadmode", "downloadmode", "uploadfile=", "tdir=", "targetdir="])
     except getopt.GetoptError  as err:
         print(err)
         sys.exit(2)
@@ -515,7 +516,7 @@ def paramMode(argv_full, logger):
         elif opt == "--uploadfile":
             upload = True
             filenames.append(arg)
-        elif opt in ("--tdir"):
+        elif opt in ("--tdir", "--targetdir"):
             tdirectory = arg
         elif opt in ("--interactive"):
             interactive = True
