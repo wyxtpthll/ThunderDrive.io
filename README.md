@@ -8,12 +8,6 @@ File locations:
 - ./config.txt (current dir)
 - ~/config.txt (home dir)
 
-Example:
-
-[thunderdrive]
-username = xx@gmail.com
-password = password
-
 # Usage
 
 search file "filename" and download to current directory:
@@ -23,4 +17,4 @@ search file "filename" and download to current directory, stop before download:
  - thunderdrive.py --search --list --prompt
 
 file ulpoad:
-- thunderdrive.y --uploadfile file.txt --tdir ThunderDriveUploadDir
+- thunderdrive.py --uploadfile file.txt --tdir ThunderDriveUploadDir
