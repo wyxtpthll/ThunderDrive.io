@@ -10,9 +10,9 @@ File locations:
 
 Example:
 
-[thunderdrive]
-username = xx@gmail.com
-password = password
+[thunderdrive]<br>
+username = xx@gmail.com<br>
+password = password<br>
 
 # Usage
 
@@ -22,5 +22,5 @@ search file "filename" and download to current directory:
 search file "filename" and download to current directory, stop before download:
  - thunderdrive.py --search --list --prompt
 
-file ulpad:
+file ulpoad:
 - thunderdrive.y --uploadfile file.txt --tdir ThunderDriveUploadDir
