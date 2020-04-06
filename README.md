@@ -10,9 +10,9 @@ File locations:
 
 Example:
 
-[thunderdrive]<br>
-username = xx@gmail.com<br>
-password = password<br>
+[thunderdrive]
+username = xx@gmail.com
+password = password
 
 # Usage
 
