@@ -587,7 +587,7 @@ if __name__ == "__main__":
             paramModeHelp()
     except KeyboardInterrupt:
         print()
-        sys.exit(0)
+        sys.exit(50)
     except Exception as ex:
         if logger is not None:
             logger.exception()
