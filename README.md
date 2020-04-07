@@ -23,5 +23,5 @@ password = password
 file download:
 - thunderdrive.py --downloadmode --list file1 file2 ....
 
-file ulpoad:
+file upload:
 - thunderdrive.py --uploadmode --targetdir ThunderDriveUploadDir file1 file2 ....
