@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-#v0.20200406
+#v0.20200407
+
 import requests
 import sys, getopt
 import logging
@@ -463,10 +464,10 @@ def paramModeHelp():
     print("--search= - phrase to search")
     print("--list - list founded files")
     print("--prompt - stops before download")
-    print("--uploadfile=failas.txt")
+    print("--uploadfile=file.txt")
     print("--uploadmode - example: thunderdrive.py --uploadmode file1 file2 ...")
     print("--downloadmode - example: thunderdrive.py --downloadmode file1 file2 ...")
-    print("--tdir=THdir, --targetdir=THdir - target directory in thinderdrive.io for upload") 
+    print("--targetdir=THdir - target directory in thinderdrive.io for upload") 
 
 def paramMode(argv_full, logger):
     #print(argv_full)
@@ -487,7 +488,7 @@ def paramMode(argv_full, logger):
     try:
         #opts, args = getopt.getopt \
         opts, args = getopt.getopt \
-            (argv, "h", ["search=", "useproxy", "list", "prompt", "help", "interactive", "uploadmode", "downloadmode", "uploadfile=", "tdir=", "targetdir="])
+            (argv, "h", ["search=", "useproxy", "list", "prompt", "help", "interactive", "uploadmode", "downloadmode", "uploadfile=", "targetdir="])
     except getopt.GetoptError  as err:
         print(err)
         sys.exit(2)
