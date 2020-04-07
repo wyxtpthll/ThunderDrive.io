@@ -20,11 +20,8 @@ password = password
 
 # Usage
 
-search file "filename" and download to current directory:
- - thunderdrive.py --search filename --list
-
-search file "filename" and download to current directory, stop before download:
- - thunderdrive.py --search --list --prompt
+file download:
+- thunderdrive.py --downloadmode --list file1 file2 ....
 
 file ulpoad:
-- thunderdrive.py --uploadfile file.txt --tdir ThunderDriveUploadDir
+- thunderdrive.py --uploadmode --targetdir ThunderDriveUploadDir file1 file2 ....
