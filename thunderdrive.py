@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 #v0.20200407
 
 import requests
@@ -31,7 +30,7 @@ class Tools(object):
         #print(type(num))
         if type(num) == int:
             #['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
-            for unit in ['','K','M','G','T','P','E','Z']:
+            for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
                 if abs(num) < 1024.0:
                     return "%3.1f%s%s" % (num, unit, suffix)
                 num /= 1024.0
@@ -60,12 +59,12 @@ class ThunderDriveAPI(object):
 
     progressBarLen = 30
 
-    def __init__(self, usr, psw, logger = None, https = None, http = None):
+    def __init__(self, usr, psw, logger=None, https=None, http=None):
         if logger != None:
             self.setLogger(logger)
         self.session = requests.Session()
 
-        self.setProxy(https = https, http = http)
+        self.setProxy(https=https, http=http)
 
         self._login(usr, psw)
 
@@ -85,7 +84,7 @@ class ThunderDriveAPI(object):
     def setLogger(self, logger):
         self.logger = logger
 
-    def setProxy(self, https = None, http = None):
+    def setProxy(self, https=None, http=None):
         self.proxies = {}
         if https != None:
             self.proxies["https"] = https
@@ -96,10 +95,8 @@ class ThunderDriveAPI(object):
         else:
             self.logger.info("proxy enabled")
 
-    def get(self, _url, stream=None, params=None, testResp = False, convertToJSON = True):
-        resp = self.session.get(_url, proxies=self.proxies, verify=self.ssl_verify
-                                    , stream=stream, headers=self.headers, params=params
-                                )
+    def get(self, _url, stream=None, params=None, testResp=False, convertToJSON=True):
+        resp = self.session.get(_url, proxies=self.proxies, verify=self.ssl_verify, stream=stream, headers=self.headers, params=params)
         resp.raise_for_status()
 
         if testResp:
@@ -111,7 +108,8 @@ class ThunderDriveAPI(object):
         else: 
             return resp
 
-    def post(self, _url, _data, testResp = False, headers=headers, auth=None, convertToJSON = True):
+    def post(self, _url, _data, testResp=False, headers=headers, auth=None, convertToJSON=True):
+
         resp = self.session.post(_url, data=_data
                                     , proxies=self.proxies, verify=self.ssl_verify
                                     , headers=headers, auth=auth
@@ -130,7 +128,7 @@ class ThunderDriveAPI(object):
         #getFolderItems
         params = None
         if folderHash != "":
-            params = [('orderBy','name'), ('orderDir',''), ('folderId',folderHash)]
+            params = [('orderBy', 'name'), ('orderDir', ''), ('folderId', folderHash)]
         self.lastResp = self.get(self.URL + "drive/entries", params=params)
 
     def getUserID(self):
@@ -144,10 +142,7 @@ class ThunderDriveAPI(object):
         resp = self.get(self.URL + "drive/user/space-usage")
         return resp["used"], resp["available"]
 
-    def _printProgressBar (self
-            , iteration, total, prefix = '', suffix = '', decimals = 1, length = 100
-            , fill = '█', printEnd = "\r"
-        ):
+    def _printProgressBar (self, iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█', printEnd="\r"):
         """
         Call in a loop to create terminal progress bar
         @params:
@@ -165,6 +160,7 @@ class ThunderDriveAPI(object):
         bar = fill * filledLength + '-' * (length - filledLength)
 
         print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = printEnd)
+        
         # # Print New Line on Complete
         # if iteration == total: 
         #     print()
