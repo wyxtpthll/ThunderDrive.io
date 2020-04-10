@@ -66,13 +66,15 @@ class ThunderDriveAPI(object):
     tries = 3
 
     def __init__(self, usr, psw, logger=None,
-                 https_proxy=None, http_proxy=None):
+                 https_proxy=None, http_proxy=None,
+                 ssl_verify=True):
 
         if logger is not None:
             self.set_logger(logger)
         self.session = requests.Session()
 
         self.set_proxy(https=https_proxy, http=http_proxy)
+        self.ssl_verify = ssl_verify
 
         self._login(usr, psw)
 
@@ -128,6 +130,7 @@ class ThunderDriveAPI(object):
                                  verify=self.ssl_verify,
                                  headers=headers, auth=auth)
         resp.raise_for_status()
+        # print(resp.text)
 
         if test_resp:
             if (str(resp.content)).find(self.errorStr) > 0:
@@ -186,14 +189,17 @@ class ThunderDriveAPI(object):
 
     __prevTime = None
     __prevChunk = None
+    __beg_time = None
 
-    def _get_up_down_speed(self, chC=0, init=False):
+    def _get_up_down_speed(self, chC=0, total=None, init=False):
         speed = None
 
         if self.__prevChunk is None or init:
             self.__prevChunk = chC
         if self.__prevTime is None or init:
             self.__prevTime = time.time()
+        if self.__beg_time is None or init:
+            self.__beg_time = datetime.datetime.now()
 
         dTime = round(float(time.time() - self.__prevTime), 3)
         dChunk = chC - self.__prevChunk
@@ -201,11 +207,26 @@ class ThunderDriveAPI(object):
         if dTime != 0:
             speed = int(dChunk / dTime)
 
+        ttl_str = ""
+        if total is not None and self.__beg_time is not None:
+            seconds = (datetime.datetime.now() - self.__beg_time).\
+                total_seconds()
+            ttl = seconds / chC * (total - chC)
+            if (ttl / 60 > 99):
+                ttl_str = " " + str(round(ttl / 60, 0)) + "m"
+            elif (ttl / 60 > 10):
+                ttl_str = " " + str(round(ttl / 60, 1)) + "m"
+            else:
+                ttl_str = " " + "{:.0f}".format(round(ttl, 0)) + "s"
+            # ttl_str = " " + str(ttl)
+            # ttl_str = '{} {} {}'.format(seconds, chC, total)
+            # print('{} {} {} {}'.format(seconds, chC, total, round(ttl, 2)))
+
         self.__prevTime = time.time()
         self.__prevChunk = chC
 
-        retSpeed = Tools.sizeof_fmt(speed) + " " * 10
-        return retSpeed[0:7]
+        retSpeed = Tools.sizeof_fmt(speed) + ttl_str + " " * 10
+        return retSpeed[0:7 + 6]
 
     def download_file_with_retry(self, file_info):
         retry_call(self.download_file, fargs=[file_info], tries=self.tries,
@@ -238,7 +259,8 @@ class ThunderDriveAPI(object):
             return
 
         fraction = encoder.bytes_read / encoder.len * 100
-        speed = self._get_up_down_speed(encoder.bytes_read)
+        speed = self._get_up_down_speed(chC=encoder.bytes_read,
+                                        total=encoder.len)
         self._print_progress_bar(fraction, 100.01,
                                  length=self.progress_bar_len, prefix='P: ',
                                  suffix=speed)
@@ -278,7 +300,7 @@ class ThunderDriveAPI(object):
             self.post(self.URL + "uploads", monitor, headers=headersupl,
                       convert_to_json=False)
             self._print_progress_bar(100, 100, length=self.progress_bar_len,
-                                     prefix='P: ', suffix="        ")
+                                     prefix='P: ', suffix=" " * 13)
             print()
 
         # print()
@@ -317,14 +339,14 @@ class ThunderDriveAPI(object):
                 chC += chunk_size
                 if i % 5 == 0:
                     # print (i, chC / file_size * 100)
-                    speed = self._get_up_down_speed(chC)
+                    speed = self._get_up_down_speed(chC=chC, total=file_size)
                     self._print_progress_bar(chC / file_size * 100, 100,
                                              length=self.progress_bar_len,
                                              prefix='P: ', suffix=speed)
 
                 # time.sleep(0.1)
             self._print_progress_bar(100, 100, length=self.progress_bar_len,
-                                     prefix='P: ', suffix="        ")
+                                     prefix='P: ', suffix=" " * 13)
             print()
 
         r.close()
@@ -568,13 +590,15 @@ def param_mode(argv_full, logger):
             use_proxy = True
 
     https = http = None
+    ssl_verify = True
     if use_proxy:
         https = "https://192.168.10.4:58080"
         http = "http://192.168.10.4:58080"
+        ssl_verify = False
 
     usr, psw = get_login_info()
     thunder_client = ThunderDriveAPI(usr, psw, logger, https_proxy=https,
-                                     http_proxy=http)
+                                     http_proxy=http, ssl_verify=ssl_verify)
     thunder_client.tries = 1
 
     if interactive:
