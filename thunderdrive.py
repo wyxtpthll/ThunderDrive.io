@@ -212,10 +212,12 @@ class ThunderDriveAPI(object):
             seconds = (datetime.datetime.now() - self.__beg_time).\
                 total_seconds()
             ttl = seconds / chC * (total - chC)
-            if (ttl / 60 > 99):
-                ttl_str = " " + str(round(ttl / 60, 0)) + "m"
-            elif (ttl / 60 > 10):
-                ttl_str = " " + str(round(ttl / 60, 1)) + "m"
+            if (ttl / 60 >= 100):
+                ttl_str = " " + "{:.0f}".format(round(ttl / 60, 0)) + "m"
+            elif (ttl / 60 >= 10):
+                ttl_str = " " + "{:.1f}".format(round(ttl / 60, 1)) + "m"
+            elif (ttl / 60 >= 5):
+                ttl_str = " " + "{:.2f}".format(round(ttl / 60, 2)) + "m"
             else:
                 ttl_str = " " + "{:.0f}".format(round(ttl, 0)) + "s"
             # ttl_str = " " + str(ttl)
