@@ -113,7 +113,8 @@ class ThunderDriveAPI(object):
 
         if test_resp:
             if (str(resp.content)).find(self.errorStr) > 0:
-                raise Exception("wyx: " + self.errorStr)
+                # raise Exception("wyx: " + self.errorStr)
+                raise Exception(self.errorStr)
 
         if convert_to_json:
             return resp.json()
@@ -130,7 +131,8 @@ class ThunderDriveAPI(object):
 
         if test_resp:
             if (str(resp.content)).find(self.errorStr) > 0:
-                raise Exception("wyx: " + self.errorStr)
+                # raise Exception("wyx: " + self.errorStr)
+                raise Exception(self.errorStr)
         if convert_to_json:
             return resp.json()
         else:
