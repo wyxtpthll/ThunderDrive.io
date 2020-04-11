@@ -373,10 +373,11 @@ class ThunderDriveAPI(object):
             if url["type"] == "folder":
                 self.logger.info("skipping folder: " + url["name"])
             else:
-                try:
-                    self.download_file_with_retry(url)
-                except Exception as ex:
-                    self.logger.exception(ex)
+                self.download_file_with_retry(url)
+                # try:
+                #     self.download_file_with_retry(url)
+                # except Exception as ex:
+                #     self.logger.exception(ex)
 
 
 class InteractiveMode(object):
