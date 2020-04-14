@@ -85,6 +85,22 @@ class ThunderDriveAPI(object):
         self.userID = self.get_user_id()
         self.get_all_folders()
 
+    def __del__(self):
+        # print("logout __del__")
+        self._logout()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        # print("logout __exit__")
+        self._logout()
+
+    def _logout(self):
+        if self.logged_in:
+            self.logged_in = False
+            self.post(self.URL + "auth/logout", _data=None)
+
     def _login(self, usr, psw):
         data = {"email": usr, "password": psw}
         login_resp = self.post(self.URL + "auth/login", data, test_resp=True)
@@ -382,13 +398,13 @@ class ThunderDriveAPI(object):
 
 class InteractiveMode(object):
 
-    def __init__(self, thunder_client):
-        self.thunder_client = thunder_client
+    def __init__(self, thunder_cl):
+        self.thunder_cl = thunder_cl
         self.interactiveMode()
 
-    def print_menu(self, thunder_client, folder_selected,
+    def print_menu(self, thunder_cl, folder_selected,
                    current_folder, stack_hash):
-        if thunder_client.logged_in:
+        if thunder_cl.logged_in:
             if folder_selected:
                 print("folder selected: ", current_folder)
             else:
@@ -461,13 +477,13 @@ class InteractiveMode(object):
             # global file_info
             clear()
             # print(stack_hash)
-            self.print_menu(self.thunder_client, folder_selected,
+            self.print_menu(self.thunder_cl, folder_selected,
                             current_folder, stack_hash)
-            if self.thunder_client.logged_in:
+            if self.thunder_cl.logged_in:
                 if folder_selected:
-                    self.print_items(self.thunder_client.last_resp,
+                    self.print_items(self.thunder_cl.last_resp,
                                      currentItemList,
-                                     self.thunder_client.user_name)
+                                     self.thunder_cl.user_name)
                 else:
                     self.print_file_menu()    # folder meniu
 
@@ -478,7 +494,7 @@ class InteractiveMode(object):
             elif cmd == "i":
                 self.file_info_print(file_info)
             elif cmd == "D":
-                self.thunder_client.download_file_with_retry(file_info)
+                self.thunder_cl.download_file_with_retry(file_info)
             # elif cmd == "U":
             #     upload_file()
             # elif cmd == "l":
@@ -486,11 +502,11 @@ class InteractiveMode(object):
             #         doLogin()
             #     get_folders("root")
             elif cmd == "SDA":
-                self.thunder_client.\
-                    download_all_search_results(self.thunder_client.last_resp)
+                self.thunder_cl.\
+                    download_all_search_results(self.thunder_cl.last_resp)
             elif cmd == "s":
                 q = input("query: ")
-                self.thunder_client.get_search_rez(q)
+                self.thunder_cl.get_search_rez(q)
                 stack_hash.append(current_hash)
                 stack_names.append(current_folder)
                 # current_hash = q
@@ -498,7 +514,7 @@ class InteractiveMode(object):
                 # current_folder = rr["name"]
             elif cmd == "u":
                 current_hash = stack_hash.pop()
-                self.thunder_client.get_folders(current_hash)
+                self.thunder_cl.get_folders(current_hash)
                 current_folder = stack_names.pop()
                 folder_selected = True
             else:
@@ -507,7 +523,7 @@ class InteractiveMode(object):
                     print("?????")
                 else:
                     if rr["type"] == "folder":
-                        self.thunder_client.get_folders(rr["hash"])
+                        self.thunder_cl.get_folders(rr["hash"])
                         folder_selected = True
                         file_info = None
                     else:
@@ -600,35 +616,38 @@ def param_mode(argv_full, logger):
         ssl_verify = False
 
     usr, psw = get_login_info()
-    thunder_client = ThunderDriveAPI(usr, psw, logger, https_proxy=https,
-                                     http_proxy=http, ssl_verify=ssl_verify)
-    thunder_client.tries = 1
+    # thunder_cl = ThunderDriveAPI(usr, psw, logger, https_proxy=https,
+    #                                  http_proxy=http, ssl_verify=ssl_verify)
+    with ThunderDriveAPI(usr, psw, logger, https_proxy=https,
+                         http_proxy=http,
+                         ssl_verify=ssl_verify) as thunder_cl:
+        thunder_cl.tries = 1
 
-    if interactive:
-        InteractiveMode(thunder_client)
-        sys.exit(0)
+        if interactive:
+            InteractiveMode(thunder_cl)
+            sys.exit(0)
 
-    if upload:
-        folder_id = folder_hash = ""
-        if target_directory is not None:
-            folder_id, folder_hash =\
-                thunder_client.find_folder_id(target_directory)
-        thunder_client.upload_file_with_retry(upl_file_names, folder_id,
+        if upload:
+            folder_id = folder_hash = ""
+            if target_directory is not None:
+                folder_id, folder_hash =\
+                    thunder_cl.find_folder_id(target_directory)
+            thunder_cl.upload_file_with_retry(upl_file_names, folder_id,
                                               folder_hash)
-        sys.exit(0)
+            sys.exit(0)
 
-    if download:
-        for search_phrase in search_phrases:
-            thunder_client.get_search_rez(search_phrase)
-            if list_files:
-                InteractiveMode.print_items(_data=thunder_client.last_resp,
-                                            user_name=thunder_client.user_name)
-            if prompt:
-                input("press any key to continue download; ctrl+C - to stop")
-            thunder_client.\
-                download_all_search_results(thunder_client.last_resp)
-        logger.info("All files downloaded")
-        sys.exit(0)
+        if download:
+            for search_phrase in search_phrases:
+                thunder_cl.get_search_rez(search_phrase)
+                if list_files:
+                    InteractiveMode.print_items(_data=thunder_cl.last_resp,
+                                                user_name=thunder_cl.user_name)
+                if prompt:
+                    input("press enter to continue download; ctrl+C - to stop")
+                thunder_cl.\
+                    download_all_search_results(thunder_cl.last_resp)
+            logger.info("All files downloaded")
+            sys.exit(0)
 
 
 def get_login_info():
