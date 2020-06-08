@@ -63,6 +63,7 @@ class ThunderDriveAPI(object):
     logger = logging.getLogger(__name__)
 
     progress_bar_len = 30
+    showprogressbar = True
     tries = 3
 
     def __init__(self, usr, psw, logger=None,
@@ -192,6 +193,9 @@ class ThunderDriveAPI(object):
             printEnd  - Opt.: end character (e.g. "\r", "\r\n") (Str)
         """
 
+        if not self.showprogressbar:
+            return
+
         percent = ("{0:." + str(decimals) + "f}").\
             format(100 * (iteration / float(total)))
         filled_length = int(length * iteration // total)
@@ -319,7 +323,8 @@ class ThunderDriveAPI(object):
                       convert_to_json=False)
             self._print_progress_bar(100, 100, length=self.progress_bar_len,
                                      prefix='P: ', suffix=" " * 13)
-            print()
+            if self.showprogressbar:
+                print()
 
         # print()
         # self.logger.info(r)
@@ -365,7 +370,8 @@ class ThunderDriveAPI(object):
                 # time.sleep(0.1)
             self._print_progress_bar(100, 100, length=self.progress_bar_len,
                                      prefix='P: ', suffix=" " * 13)
-            print()
+            if self.showprogressbar:
+                print()
 
         r.close()
         r.raise_for_status()
@@ -565,6 +571,7 @@ def param_mode(argv_full, logger):
     # filename = ""
     upl_file_names = []
     target_directory = None
+    disableprogressbar = False
 
     try:
         opts, args = \
@@ -572,6 +579,7 @@ def param_mode(argv_full, logger):
                           ["search=", "useproxy", "list",
                            "prompt", "help", "interactive",
                            "uploadmode", "downloadmode",
+                           "disableprogressbar",
                            "uploadfile=", "targetdir="]
                           )
     except getopt.GetoptError as err:
@@ -607,6 +615,8 @@ def param_mode(argv_full, logger):
             interactive = True
         elif opt in ("--useproxy"):
             use_proxy = True
+        elif opt in ("--disableprogressbar"):
+            disableprogressbar = True
 
     https = http = None
     ssl_verify = True
@@ -622,6 +632,9 @@ def param_mode(argv_full, logger):
                          http_proxy=http,
                          ssl_verify=ssl_verify) as thunder_cl:
         thunder_cl.tries = 1
+
+        if disableprogressbar:
+            thunder_cl.showprogressbar = False
 
         if interactive:
             InteractiveMode(thunder_cl)
