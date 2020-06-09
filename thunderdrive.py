@@ -583,7 +583,7 @@ def param_mode(argv_full, logger):
                            "uploadfile=", "targetdir="]
                           )
     except getopt.GetoptError as err:
-        print(err)
+        print(err, file=sys.stderr)
         sys.exit(2)
     # print(opts, args)
     for opt, arg in opts:
@@ -716,7 +716,7 @@ if __name__ == "__main__":
         if logger is not None:
             logger.exception("")
         else:
-            print(ex)
+            print(ex, file=sys.stderr)
         sys.exit(1)
     finally:
         pass
