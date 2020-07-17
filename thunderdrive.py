@@ -298,6 +298,7 @@ class ThunderDriveAPI(object):
         # headersupl['Origin'] = "https://app.thunderdrive.io"
 
         with open(filePath, 'rb') as f:
+        # with sys.stdin as f:
             form = MultipartEncoder({
                 'parentId': (None, folder_id),
                 'file': (filePath, f),
