@@ -633,6 +633,7 @@ def param_mode(argv_full, logger):
                          http_proxy=http,
                          ssl_verify=ssl_verify) as thunder_cl:
         thunder_cl.tries = 1
+        thunder_cl.tries = 2
 
         if disableprogressbar:
             thunder_cl.showprogressbar = False
