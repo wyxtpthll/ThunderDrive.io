@@ -18,10 +18,13 @@ from requests_toolbelt import (MultipartEncoder,
 # import traceback
 # import math
 # from retry import retry
+import signal
 
 
 # # temp
 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+SignalStop = False
 
 
 def clear():
@@ -277,6 +280,10 @@ class ThunderDriveAPI(object):
     def __upload_callback(self, encoder):
         """Upload progress bar."""
         self.__upload_step += 1
+        global SignalStop
+        if SignalStop:
+            SignalStop = False
+            raise Exception("SignalStop upld")
         if self.__upload_step % 200 != 0:
             return
 
@@ -298,7 +305,7 @@ class ThunderDriveAPI(object):
         # headersupl['Origin'] = "https://app.thunderdrive.io"
 
         with open(filePath, 'rb') as f:
-        # with sys.stdin as f:
+            # with sys.stdin as f:
             form = MultipartEncoder({
                 'parentId': (None, folder_id),
                 'file': (filePath, f),
@@ -355,9 +362,13 @@ class ThunderDriveAPI(object):
         i = 0
         chC = 0
         chunk_size = 1024 * 512
+        global SignalStop
         self._get_up_down_speed(init=True)
         with open(file_name, 'wb') as f:
             for ch in r.iter_content(chunk_size=chunk_size):
+                if SignalStop:
+                    SignalStop = False
+                    raise Exception("SignalStop dnld")
                 f.write(ch)
                 i += 1
                 chC += chunk_size
@@ -633,7 +644,7 @@ def param_mode(argv_full, logger):
                          http_proxy=http,
                          ssl_verify=ssl_verify) as thunder_cl:
         thunder_cl.tries = 1
-        thunder_cl.tries = 2
+        thunder_cl.tries = 5
 
         if disableprogressbar:
             thunder_cl.showprogressbar = False
@@ -703,8 +714,15 @@ def prep_logger():
     return logger
 
 
+def handler(signum, frame):
+    # print('Signal handler called with signal', signum)
+    global SignalStop
+    SignalStop = True
+
+
 if __name__ == "__main__":
     logger = prep_logger()
+    signal.signal(signal.SIGUSR2, handler)
     try:
         if len(sys.argv) > 1:
             param_mode(sys.argv, logger)
