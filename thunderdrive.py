@@ -722,7 +722,10 @@ def handler(signum, frame):
 
 if __name__ == "__main__":
     logger = prep_logger()
+
+    print("         Restart upld/downld:   ", "kill -s USR2 ", os.getpid())
     signal.signal(signal.SIGUSR2, handler)
+
     try:
         if len(sys.argv) > 1:
             param_mode(sys.argv, logger)
