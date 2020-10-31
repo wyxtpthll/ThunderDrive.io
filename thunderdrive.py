@@ -250,8 +250,10 @@ class ThunderDriveAPI(object):
         self.__prevTime = time.time()
         self.__prevChunk = chC
 
+        avg = self.calculateSpeddAVG(speed)
+
         retSpeed = Tools.sizeof_fmt(speed) + ttl_str + " " * 10
-        return retSpeed[0:7 + 6]
+        return retSpeed[0:7 + 6] + avg
 
     def download_file_with_retry(self, file_info):
         retry_call(self.download_file, fargs=[file_info], tries=self.tries,
@@ -412,6 +414,29 @@ class ThunderDriveAPI(object):
                 #     self.download_file_with_retry(url)
                 # except Exception as ex:
                 #     self.logger.exception(ex)
+
+    speedList = []
+
+    def calculateSpeddAVG(self, el):
+        llen = 10
+        killSpeed = 1024*70  # 70KB
+        if type(el) == int:
+            self.speedList.append(el)
+            if len(self.speedList) > llen:
+                self.speedList.pop(0)
+
+            avg = sum(self.speedList) / len(self.speedList)
+
+            if len(self.speedList) >= llen and avg < killSpeed:
+                print("")
+                print(self.speedList)
+                print(Tools.sizeof_fmt(int(avg)), len(self.speedList),
+                      Tools.sizeof_fmt(killSpeed))
+                self.speedList.clear()
+                raise Exception("Auto restart slow download !!!")
+
+            # return Tools.sizeof_fmt(int(avg))
+        return ""
 
 
 class InteractiveMode(object):
