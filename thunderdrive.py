@@ -392,6 +392,53 @@ class ThunderDriveAPI(object):
         self.logger.info("E: " + file_name + " " + datetime.datetime.now().
                          strftime('%H:%M:%S'))
 
+    def get_resent(self, all = False, count = 0):
+        # self.logger.info("resent ({}) .....".format(""))
+        params = [('orderBy', 'created_at'), ('orderDir', 'desc'),
+                  ('recentOnly', 'true')]
+        resp = self.get(self.URL + "drive/entries", params=params)
+        self.last_resp = resp
+        # self.last_resp["data"].clear()
+
+        # for x in resp["data"]:
+        #     self.last_resp["data"].append(x)
+        #     if len(self.last_resp["data"]) >= count:
+        #         stop = True
+        #         break
+
+        while len(self.last_resp["data"]) > count:
+            del(self.last_resp["data"][count])
+        if len(self.last_resp["data"]) >= count:
+            return self.last_resp
+        
+        if all:
+            count = 99999
+
+        page = 1
+        stop = False
+        if all or count > 0:
+            while page <= int(resp["last_page"]):
+                page += 1
+                params = [('orderBy', 'created_at'), ('orderDir', 'desc'),
+                  ('recentOnly', 'true'), ('page', page)]
+                resp = self.get(self.URL + "drive/entries", params=params)
+
+                for x in resp["data"]:
+                    self.last_resp["data"].append(x)
+                    if len(self.last_resp["data"]) >= count:
+                        stop = True
+                        break
+
+                # print(len(self.last_resp["data"]))
+                if stop:
+                    break
+
+                # self.last_resp["data"].append()
+                # //self.last_resp["data"].ap
+            # print(len(self.last_resp["data"]))
+
+        return self.last_resp
+
     def get_search_rez(self, query):
         self.logger.info("searching ({}) .....".format(query))
         params = [('orderBy', 'name'), ('orderDir', ''),
@@ -486,7 +533,7 @@ class InteractiveMode(object):
             if type(key["file_size"]) == int:
                 total += key["file_size"]
         if total > 0:
-            print("Toltal:", Tools.sizeof_fmt(total))
+            print("Total:", Tools.sizeof_fmt(total))
 
     def print_file_menu(self, ):
         print("i - info")
@@ -547,6 +594,8 @@ class InteractiveMode(object):
             elif cmd == "SDA":
                 self.thunder_cl.\
                     download_all_search_results(self.thunder_cl.last_resp)
+            elif cmd == "r":
+                self.thunder_cl.get_resent(all = True)
             elif cmd == "s":
                 q = input("query: ")
                 self.thunder_cl.get_search_rez(q)
@@ -591,6 +640,7 @@ def param_mode_help():
     print("--downloadmode - example:")
     print("     thunderdrive.py --downloadmode file1 file2 ...")
     print("--targetdir=THdir - target directory in thinderdrive.io for upload")
+    print("--downloadrandom - download random file for check")
 
 
 def param_mode(argv_full, logger):
@@ -609,6 +659,8 @@ def param_mode(argv_full, logger):
     upl_file_names = []
     target_directory = None
     disableprogressbar = False
+    printresent = 0
+    # downloadrandom = False
 
     try:
         opts, args = \
@@ -617,7 +669,8 @@ def param_mode(argv_full, logger):
                            "prompt", "help", "interactive",
                            "uploadmode", "downloadmode",
                            "disableprogressbar",
-                           "uploadfile=", "targetdir="]
+                           "uploadfile=", "targetdir=",
+                           "printresent="]
                           )
     except getopt.GetoptError as err:
         print(err, file=sys.stderr)
@@ -654,6 +707,9 @@ def param_mode(argv_full, logger):
             use_proxy = True
         elif opt in ("--disableprogressbar"):
             disableprogressbar = True
+        elif opt in ("--printresent"):
+            printresent = int(arg)
+            # printresent_count = int(args)
 
     https = http = None
     ssl_verify = True
@@ -685,6 +741,13 @@ def param_mode(argv_full, logger):
                     thunder_cl.find_folder_id(target_directory)
             thunder_cl.upload_file_with_retry(upl_file_names, folder_id,
                                               folder_hash)
+            sys.exit(0)
+
+        if printresent > 0:
+            thunder_cl.get_resent(count = printresent)
+            if list_files:
+                InteractiveMode.print_items(_data=thunder_cl.last_resp,
+                                            user_name=thunder_cl.user_name)
             sys.exit(0)
 
         if download:
