@@ -641,6 +641,7 @@ def param_mode_help():
     print("     thunderdrive.py --downloadmode file1 file2 ...")
     print("--targetdir=THdir - target directory in thinderdrive.io for upload")
     print("--downloadrandom - download random file for check")
+    print("--printresent=x - print x most resent items")
 
 
 def param_mode(argv_full, logger):
