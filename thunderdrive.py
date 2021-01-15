@@ -300,6 +300,7 @@ class ThunderDriveAPI(object):
         return prepared_request
 
     def upload_file(self, filePath, folder_id="", folder_hash=""):
+        print_pid()
         headersupl = dict()
         headersupl = copy.deepcopy(self.headers)
         headersupl['X-XSRF-TOKEN'] =\
@@ -346,6 +347,7 @@ class ThunderDriveAPI(object):
 
     def download_file(self, file_info):
 
+        print_pid()
         file_size = int(file_info["file_size"])
         file_name = file_info["name"]
 
@@ -392,8 +394,8 @@ class ThunderDriveAPI(object):
         self.logger.info("E: " + file_name + " " + datetime.datetime.now().
                          strftime('%H:%M:%S'))
 
-    def get_resent(self, all = False, count = 0):
-        # self.logger.info("resent ({}) .....".format(""))
+    def get_recent(self, all = False, count = 0):
+        # self.logger.info("recent ({}) .....".format(""))
         params = [('orderBy', 'created_at'), ('orderDir', 'desc'),
                   ('recentOnly', 'true')]
         resp = self.get(self.URL + "drive/entries", params=params)
@@ -508,7 +510,8 @@ class InteractiveMode(object):
         print("q - quit")
 
     @staticmethod
-    def print_items(_data, currentItemList={}, user_name=""):
+    def print_items(_data, currentItemList={}, user_name="", sep=' '
+                    , sum_total = True):
         i = 0
         d = _data
         currentItemList.clear()
@@ -528,11 +531,11 @@ class InteractiveMode(object):
             finally:
                 pass
             print(i, key["name"], "(", key["type"],
-                  Tools.sizeof_fmt(key["file_size"]), ")", user)
+                  Tools.sizeof_fmt(key["file_size"]), ")", user, sep = sep)
             # , key["id"], key["path"], key["type"], key["hash"]
             if type(key["file_size"]) == int:
                 total += key["file_size"]
-        if total > 0:
+        if total > 0 and sum_total:
             print("Total:", Tools.sizeof_fmt(total))
 
     def print_file_menu(self, ):
@@ -595,7 +598,7 @@ class InteractiveMode(object):
                 self.thunder_cl.\
                     download_all_search_results(self.thunder_cl.last_resp)
             elif cmd == "r":
-                self.thunder_cl.get_resent(all = True)
+                self.thunder_cl.get_recent(all = True)
             elif cmd == "s":
                 q = input("query: ")
                 self.thunder_cl.get_search_rez(q)
@@ -640,7 +643,7 @@ def param_mode_help():
     print("--downloadmode - example:")
     print("     thunderdrive.py --downloadmode file1 file2 ...")
     print("--targetdir=THdir - target directory in thinderdrive.io for upload")
-    print("--printresent=x - print x most resent items")
+    print("--printrecent=x - print x most recent items")
 
 
 def param_mode(argv_full, logger):
@@ -659,7 +662,7 @@ def param_mode(argv_full, logger):
     upl_file_names = []
     target_directory = None
     disableprogressbar = False
-    printresent = 0
+    printrecent = 0
     # downloadrandom = False
 
     try:
@@ -670,7 +673,7 @@ def param_mode(argv_full, logger):
                            "uploadmode", "downloadmode",
                            "disableprogressbar",
                            "uploadfile=", "targetdir=",
-                           "printresent="]
+                           "printrecent="]
                           )
     except getopt.GetoptError as err:
         print(err, file=sys.stderr)
@@ -707,9 +710,9 @@ def param_mode(argv_full, logger):
             use_proxy = True
         elif opt in ("--disableprogressbar"):
             disableprogressbar = True
-        elif opt in ("--printresent"):
-            printresent = int(arg)
-            # printresent_count = int(args)
+        elif opt in ("--printrecent"):
+            printrecent = int(arg)
+            # printrecent_count = int(args)
 
     https = http = None
     ssl_verify = True
@@ -743,11 +746,12 @@ def param_mode(argv_full, logger):
                                               folder_hash)
             sys.exit(0)
 
-        if printresent > 0:
-            thunder_cl.get_resent(count = printresent)
-            if list_files:
+        if printrecent > 0:
+            thunder_cl.get_recent(count = printrecent)
+            if list_files or True:
                 InteractiveMode.print_items(_data=thunder_cl.last_resp,
-                                            user_name=thunder_cl.user_name)
+                                            user_name=thunder_cl.user_name,
+                                            sep="|", sum_total=False)
             sys.exit(0)
 
         if download:
@@ -808,10 +812,13 @@ def handler(signum, frame):
     SignalStop = True
 
 
+def print_pid():
+    print("         Restart upld/downld:   ", "kill -s USR2 ", os.getpid())
+
+
 if __name__ == "__main__":
     logger = prep_logger()
 
-    print("         Restart upld/downld:   ", "kill -s USR2 ", os.getpid())
     signal.signal(signal.SIGUSR2, handler)
 
     try:
