@@ -19,7 +19,7 @@ from requests_toolbelt import (MultipartEncoder,
 # import math
 # from retry import retry
 import signal
-
+import json
 
 # # temp
 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -42,8 +42,8 @@ class Tools(object):
                     return "%3.1f%s%s" % (num, unit, suffix)
                 num /= 1024.0
             return "%.1f%s%s" % (num, 'Y', suffix)
-        return ""
 
+        return ""
 
 class ThunderDriveAPI(object):
     """thunderdrive.io api beta"""
@@ -143,10 +143,10 @@ class ThunderDriveAPI(object):
         else:
             return resp
 
-    def post(self, _url, _data, test_resp=False,
+    def post(self, _url, _data, _json=None, test_resp=False,
              headers=headers, auth=None, convert_to_json=True):
 
-        resp = self.session.post(_url, data=_data, proxies=self.proxies,
+        resp = self.session.post(_url, data=_data, json=_json, proxies=self.proxies,
                                  verify=self.ssl_verify,
                                  headers=headers, auth=auth)
         resp.raise_for_status()
@@ -259,12 +259,42 @@ class ThunderDriveAPI(object):
         retry_call(self.download_file, fargs=[file_info], tries=self.tries,
                    delay=5, backoff=2, max_delay=30, logger=self.logger)
 
-    def find_folder_id(self, tdir):
+    def make_folder(self, name, parent_name):
+        pid = None
+        if parent_name != "":
+            pid, _ = self.find_folder_id(tdir = parent_name)
+        
+        data = json.dumps({"name": name, "parent_id": pid})
+
+        headersupl = dict()
+        headersupl = copy.deepcopy(self.headers)
+        headersupl['X-XSRF-TOKEN'] =\
+            urllib.parse.unquote(self.session.cookies["XSRF-TOKEN"])
+        headersupl["Content-Type"] = "application/json"
+
+        mk_resp = self.post(self.URL + "drive/folders", _data=data,
+                            test_resp=True, headers=headersupl)
+        # mk_resp = self.post("http://httpbin.org/post", _data=data, test_resp=True)
+
+        if mk_resp["status"] == "success":
+            self.logger.info("Folder '{}' created in {} directory".
+                    format(name, parent_name))
+            self.get_all_folders()
+            return self.find_folder_id(tdir = name)
+        
+        return "", ""
+
+    def find_folder_id(self, tdir, parent_folder = "", allow_create = False):
         for folder in self.allFolders:
             if folder["name"].upper() == tdir.upper():
                 self.logger.info("Found dir '{}': id - {}; hash - {}".
                                  format(tdir, folder["id"], folder["hash"]))
                 return str(folder["id"]), folder["hash"]
+
+        if allow_create:
+            xid, xhash = self.make_folder(tdir, parent_folder)
+            if xid != 0:
+                return str(xid), xhash
 
         self.logger.info("Directory '{}' not found in ThunderDrive.io".
                          format(tdir))
@@ -643,6 +673,8 @@ def param_mode_help():
     print("--downloadmode - example:")
     print("     thunderdrive.py --downloadmode file1 file2 ...")
     print("--targetdir=THdir - target directory in thinderdrive.io for upload")
+    print("--parentdir=pdir - in which directory create new dir")
+    print("--createdirifnotfound - will create direktory in pdir or in root dir")
     print("--printrecent=x - print x most recent items")
 
 
@@ -661,6 +693,8 @@ def param_mode(argv_full, logger):
     # filename = ""
     upl_file_names = []
     target_directory = None
+    parent_directory = ""
+    create_dir_if_not_found = False
     disableprogressbar = False
     printrecent = 0
     # downloadrandom = False
@@ -673,6 +707,8 @@ def param_mode(argv_full, logger):
                            "uploadmode", "downloadmode",
                            "disableprogressbar",
                            "uploadfile=", "targetdir=",
+                           "createdirifnotfound",
+                           "parentdir=",
                            "printrecent="]
                           )
     except getopt.GetoptError as err:
@@ -704,6 +740,10 @@ def param_mode(argv_full, logger):
             upl_file_names.append(arg)
         elif opt in ("--tdir", "--targetdir"):
             target_directory = arg
+        elif opt in ("--parentdir"):
+            parent_directory = arg
+        elif opt in ("--createdirifnotfound"):
+            create_dir_if_not_found = True
         elif opt in ("--interactive"):
             interactive = True
         elif opt in ("--useproxy"):
@@ -717,8 +757,8 @@ def param_mode(argv_full, logger):
     https = http = None
     ssl_verify = True
     if use_proxy:
-        https = "https://192.168.10.4:58080"
-        http = "http://192.168.10.4:58080"
+        https = "https://192.168.10.221:8080"
+        http = "http://192.168.10.221:8080"
         ssl_verify = False
 
     usr, psw = get_login_info()
@@ -741,7 +781,9 @@ def param_mode(argv_full, logger):
             folder_id = folder_hash = ""
             if target_directory is not None:
                 folder_id, folder_hash =\
-                    thunder_cl.find_folder_id(target_directory)
+                    thunder_cl.find_folder_id(target_directory,
+                                              parent_folder=parent_directory,
+                                              allow_create=create_dir_if_not_found)
             thunder_cl.upload_file_with_retry(upl_file_names, folder_id,
                                               folder_hash)
             sys.exit(0)

@@ -10,7 +10,7 @@ autocomplete_thunderdrive()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     #echo $prev
 
-    opts="-h --help --search --useproxy --list --prompt --interactive --uploadfile --uploadmode --downloadmode --targetdir --disableprogressbar --printrecent"
+    opts="-h --help --search --useproxy --list --prompt --interactive --uploadfile --uploadmode --downloadmode --targetdir --parentdir --createdirifnotfound --disableprogressbar --printrecent"
     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
 }
 
