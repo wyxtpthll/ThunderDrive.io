@@ -149,7 +149,8 @@ class ThunderDriveAPI(object):
 
         resp = self.session.post(_url, data=_data, json=_json, proxies=self.proxies,
                                  verify=self.ssl_verify,
-                                 headers=headers, auth=auth)
+                                 headers=headers, auth=auth,
+                                 timeout=30)
         resp.raise_for_status()
         # print(resp.text)
 
