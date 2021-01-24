@@ -130,7 +130,8 @@ class ThunderDriveAPI(object):
 
         resp = self.session.get(_url, proxies=self.proxies,
                                 verify=self.ssl_verify, stream=stream,
-                                headers=self.headers, params=params)
+                                headers=self.headers, params=params,
+                                timeout=30)
         resp.raise_for_status()
 
         if test_resp:
