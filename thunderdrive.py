@@ -131,7 +131,7 @@ class ThunderDriveAPI(object):
         resp = self.session.get(_url, proxies=self.proxies,
                                 verify=self.ssl_verify, stream=stream,
                                 headers=self.headers, params=params,
-                                timeout=30)
+                                timeout=300)
         resp.raise_for_status()
 
         if test_resp:
@@ -150,7 +150,7 @@ class ThunderDriveAPI(object):
         resp = self.session.post(_url, data=_data, json=_json, proxies=self.proxies,
                                  verify=self.ssl_verify,
                                  headers=headers, auth=auth,
-                                 timeout=30)
+                                 timeout=300)
         resp.raise_for_status()
         # print(resp.text)
 
