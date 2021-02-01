@@ -126,12 +126,13 @@ class ThunderDriveAPI(object):
             self.logger.info("proxy enabled")
 
     def get(self, _url, stream=None, params=None, test_resp=False,
-            convert_to_json=True):
+            convert_to_json=True,
+            timeout=900):
 
         resp = self.session.get(_url, proxies=self.proxies,
                                 verify=self.ssl_verify, stream=stream,
                                 headers=self.headers, params=params,
-                                timeout=300)
+                                timeout=timeout)
         resp.raise_for_status()
 
         if test_resp:
@@ -145,12 +146,13 @@ class ThunderDriveAPI(object):
             return resp
 
     def post(self, _url, _data, _json=None, test_resp=False,
-             headers=headers, auth=None, convert_to_json=True):
+             headers=headers, auth=None, convert_to_json=True,
+             timeout=900):
 
         resp = self.session.post(_url, data=_data, json=_json, proxies=self.proxies,
                                  verify=self.ssl_verify,
                                  headers=headers, auth=auth,
-                                 timeout=300)
+                                 timeout=timeout)
         resp.raise_for_status()
         # print(resp.text)
 
@@ -363,7 +365,7 @@ class ThunderDriveAPI(object):
             # self.post(self.URL + "uploads", monitor, headers=headersupl,
             #   auth=self.__rewrite_request, convert_to_json=False)
             self.post(self.URL + "uploads", monitor, headers=headersupl,
-                      convert_to_json=False)
+                      convert_to_json=False, timeout=300)
             self._print_progress_bar(100, 100, length=self.progress_bar_len,
                                      prefix='P: ', suffix=" " * 13)
             if self.showprogressbar:
@@ -389,7 +391,8 @@ class ThunderDriveAPI(object):
 
         r = self.get(self.URL + "uploads/download",
                      params=[('hashes', file_info["hash"])],
-                     convert_to_json=False, stream=True)
+                     convert_to_json=False, stream=True,
+                     timeout=300)
 
         self.logger.info("D: " + file_name + " " + datetime.datetime.now().
                          strftime('%H:%M:%S'))
@@ -691,6 +694,7 @@ def param_mode(argv_full, logger):
     prompt = False
     upload = False
     download = False
+    search = False
     interactive = False
     # filename = ""
     upl_file_names = []
@@ -725,7 +729,8 @@ def param_mode(argv_full, logger):
             download = True
             search_phrases = args
         elif opt == "--search":
-            download = True
+            # download = True
+            search = True
             search_phrases.append(arg)
         # elif opt in ("--disableproxy"):
         #     disableproxy = True
@@ -796,6 +801,14 @@ def param_mode(argv_full, logger):
                 InteractiveMode.print_items(_data=thunder_cl.last_resp,
                                             user_name=thunder_cl.user_name,
                                             sep="|", sum_total=False)
+            sys.exit(0)
+
+        if search and not download:
+            for search_phrase in search_phrases:
+                thunder_cl.get_search_rez(search_phrase)
+                if list_files:
+                    InteractiveMode.print_items(_data=thunder_cl.last_resp,
+                                                user_name=thunder_cl.user_name)
             sys.exit(0)
 
         if download:
