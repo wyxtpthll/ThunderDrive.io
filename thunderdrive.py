@@ -800,7 +800,7 @@ def param_mode(argv_full, logger):
             if list_files or True:
                 InteractiveMode.print_items(_data=thunder_cl.last_resp,
                                             user_name=thunder_cl.user_name,
-                                            sep="|", sum_total=False)
+                                            sep="|", sum_total=True)
             sys.exit(0)
 
         if search and not download:
