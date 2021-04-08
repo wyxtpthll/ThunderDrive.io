@@ -25,6 +25,7 @@ import json
 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 SignalStop = False
+deftimeout = 9000
 
 
 def clear():
@@ -365,7 +366,7 @@ class ThunderDriveAPI(object):
             # self.post(self.URL + "uploads", monitor, headers=headersupl,
             #   auth=self.__rewrite_request, convert_to_json=False)
             self.post(self.URL + "uploads", monitor, headers=headersupl,
-                      convert_to_json=False, timeout=900)
+                      convert_to_json=False, timeout=deftimeout)
             self._print_progress_bar(100, 100, length=self.progress_bar_len,
                                      prefix='P: ', suffix=" " * 13)
             if self.showprogressbar:
@@ -392,7 +393,7 @@ class ThunderDriveAPI(object):
         r = self.get(self.URL + "uploads/download",
                      params=[('hashes', file_info["hash"])],
                      convert_to_json=False, stream=True,
-                     timeout=900)
+                     timeout=deftimeout)
 
         self.logger.info("D: " + file_name + " " + datetime.datetime.now().
                          strftime('%H:%M:%S'))
