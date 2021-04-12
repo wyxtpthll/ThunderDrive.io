@@ -128,7 +128,7 @@ class ThunderDriveAPI(object):
 
     def get(self, _url, stream=None, params=None, test_resp=False,
             convert_to_json=True,
-            timeout=900):
+            timeout=90):
 
         resp = self.session.get(_url, proxies=self.proxies,
                                 verify=self.ssl_verify, stream=stream,
@@ -148,7 +148,7 @@ class ThunderDriveAPI(object):
 
     def post(self, _url, _data, _json=None, test_resp=False,
              headers=headers, auth=None, convert_to_json=True,
-             timeout=900):
+             timeout=90):
 
         resp = self.session.post(_url, data=_data, json=_json, proxies=self.proxies,
                                  verify=self.ssl_verify,
