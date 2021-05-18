@@ -12,6 +12,8 @@ import datetime
 import configparser
 import copy
 from retry.api import retry_call
+from retry import retry
+
 from requests_toolbelt import (MultipartEncoder,
                                MultipartEncoderMonitor)
 # import urllib3
@@ -25,7 +27,6 @@ import json
 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 SignalStop = False
-deftimeout = 9000
 
 
 def clear():
@@ -101,11 +102,13 @@ class ThunderDriveAPI(object):
         # print("logout __exit__")
         self._logout()
 
+    @retry(tries=3, delay=3)
     def _logout(self):
         if self.logged_in:
             self.logged_in = False
             self.post(self.URL + "auth/logout", _data=None)
 
+    @retry(tries=3, delay=3)
     def _login(self, usr, psw):
         data = {"email": usr, "password": psw}
         login_resp = self.post(self.URL + "auth/login", data, test_resp=True)
@@ -128,7 +131,7 @@ class ThunderDriveAPI(object):
 
     def get(self, _url, stream=None, params=None, test_resp=False,
             convert_to_json=True,
-            timeout=90):
+            timeout=900):
 
         resp = self.session.get(_url, proxies=self.proxies,
                                 verify=self.ssl_verify, stream=stream,
@@ -148,7 +151,7 @@ class ThunderDriveAPI(object):
 
     def post(self, _url, _data, _json=None, test_resp=False,
              headers=headers, auth=None, convert_to_json=True,
-             timeout=90):
+             timeout=900):
 
         resp = self.session.post(_url, data=_data, json=_json, proxies=self.proxies,
                                  verify=self.ssl_verify,
@@ -166,6 +169,7 @@ class ThunderDriveAPI(object):
         else:
             return resp
 
+    @retry(tries=3, delay=3)
     def get_folders(self, folder_hash=""):
         params = None
         if folder_hash != "":
@@ -177,11 +181,13 @@ class ThunderDriveAPI(object):
     def get_user_id(self):
         return self.last_resp["data"][0]["users"][0]["id"]
 
+    @retry(tries=3, delay=3)
     def get_all_folders(self):
         self.allFolders = self.get(self.URL + "drive/users/{}/folders".
                                    format(self.userID))["folders"]
         return self.allFolders
 
+    @retry(tries=3, delay=3)
     def get_space_usage(self):
         resp = self.get(self.URL + "drive/user/space-usage")
         return resp["used"], resp["available"]
@@ -264,6 +270,7 @@ class ThunderDriveAPI(object):
         retry_call(self.download_file, fargs=[file_info], tries=self.tries,
                    delay=5, backoff=2, max_delay=30, logger=self.logger)
 
+    @retry(tries=3, delay=3)
     def make_folder(self, name, parent_name):
         pid = None
         if parent_name != "":
@@ -366,7 +373,7 @@ class ThunderDriveAPI(object):
             # self.post(self.URL + "uploads", monitor, headers=headersupl,
             #   auth=self.__rewrite_request, convert_to_json=False)
             self.post(self.URL + "uploads", monitor, headers=headersupl,
-                      convert_to_json=False, timeout=deftimeout)
+                      convert_to_json=False, timeout=300)
             self._print_progress_bar(100, 100, length=self.progress_bar_len,
                                      prefix='P: ', suffix=" " * 13)
             if self.showprogressbar:
@@ -393,7 +400,7 @@ class ThunderDriveAPI(object):
         r = self.get(self.URL + "uploads/download",
                      params=[('hashes', file_info["hash"])],
                      convert_to_json=False, stream=True,
-                     timeout=deftimeout)
+                     timeout=300)
 
         self.logger.info("D: " + file_name + " " + datetime.datetime.now().
                          strftime('%H:%M:%S'))
@@ -430,6 +437,7 @@ class ThunderDriveAPI(object):
         self.logger.info("E: " + file_name + " " + datetime.datetime.now().
                          strftime('%H:%M:%S'))
 
+    @retry(tries=3, delay=3)
     def get_recent(self, all = False, count = 0):
         # self.logger.info("recent ({}) .....".format(""))
         params = [('orderBy', 'created_at'), ('orderDir', 'desc'),
@@ -477,6 +485,7 @@ class ThunderDriveAPI(object):
 
         return self.last_resp
 
+    @retry(tries=3, delay=3)
     def get_search_rez(self, query):
         self.logger.info("searching ({}) .....".format(query))
         params = [('orderBy', 'name'), ('orderDir', ''),
@@ -801,7 +810,7 @@ def param_mode(argv_full, logger):
             if list_files or True:
                 InteractiveMode.print_items(_data=thunder_cl.last_resp,
                                             user_name=thunder_cl.user_name,
-                                            sep="|", sum_total=True)
+                                            sep="|", sum_total=False)
             sys.exit(0)
 
         if search and not download:
