@@ -27,7 +27,7 @@ import json
 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 SignalStop = False
-
+deftimeout = 9000
 
 def clear():
     # clear = lambda: os.system('clear')
@@ -131,7 +131,7 @@ class ThunderDriveAPI(object):
 
     def get(self, _url, stream=None, params=None, test_resp=False,
             convert_to_json=True,
-            timeout=900):
+            timeout=90):
 
         resp = self.session.get(_url, proxies=self.proxies,
                                 verify=self.ssl_verify, stream=stream,
@@ -151,7 +151,7 @@ class ThunderDriveAPI(object):
 
     def post(self, _url, _data, _json=None, test_resp=False,
              headers=headers, auth=None, convert_to_json=True,
-             timeout=900):
+             timeout=90):
 
         resp = self.session.post(_url, data=_data, json=_json, proxies=self.proxies,
                                  verify=self.ssl_verify,
@@ -373,7 +373,7 @@ class ThunderDriveAPI(object):
             # self.post(self.URL + "uploads", monitor, headers=headersupl,
             #   auth=self.__rewrite_request, convert_to_json=False)
             self.post(self.URL + "uploads", monitor, headers=headersupl,
-                      convert_to_json=False, timeout=300)
+                      convert_to_json=False, timeout=deftimeout)
             self._print_progress_bar(100, 100, length=self.progress_bar_len,
                                      prefix='P: ', suffix=" " * 13)
             if self.showprogressbar:
@@ -400,7 +400,7 @@ class ThunderDriveAPI(object):
         r = self.get(self.URL + "uploads/download",
                      params=[('hashes', file_info["hash"])],
                      convert_to_json=False, stream=True,
-                     timeout=300)
+                     timeout=deftimeout)
 
         self.logger.info("D: " + file_name + " " + datetime.datetime.now().
                          strftime('%H:%M:%S'))
@@ -810,7 +810,7 @@ def param_mode(argv_full, logger):
             if list_files or True:
                 InteractiveMode.print_items(_data=thunder_cl.last_resp,
                                             user_name=thunder_cl.user_name,
-                                            sep="|", sum_total=False)
+                                            sep="|", sum_total=True)
             sys.exit(0)
 
         if search and not download:
