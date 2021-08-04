@@ -490,7 +490,7 @@ class ThunderDriveAPI(object):
         self.logger.info("searching ({}) .....".format(query))
         params = [('orderBy', 'name'), ('orderDir', ''),
                   ('type', ''), ('query', query)]
-        resp = self.get(self.URL + "drive/entries", params=params)
+        resp = self.get(self.URL + "drive/entries", params=params, timeout=deftimeout)
         self.last_resp = resp
         return resp
 
